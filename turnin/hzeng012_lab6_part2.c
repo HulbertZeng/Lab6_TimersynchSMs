@@ -7,7 +7,7 @@
  * I acknowledge all content contained herein, excluding template or example
  * code, is my own original work.
  *
- *  Demo Link: Youtube URL>
+ *  Demo Link: https://www.youtube.com/watch?v=Fsxjq5j3e2o&feature=youtu.be
  */ 
 #include <avr/io.h>
 #ifdef _SIMULATE_
