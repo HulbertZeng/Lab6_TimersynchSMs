@@ -1,13 +1,13 @@
  /* Author: Hulbert Zeng
  * Partner(s) Name (if applicable):  
  * Lab Section: 021
- * Assignment: Lab #6  Exercise #2
+ * Assignment: Lab #6  Exercise #3
  * Exercise Description: [optional - include for your own benefit]
  *
  * I acknowledge all content contained herein, excluding template or example
  * code, is my own original work.
  *
- *  Demo Link: Youtube URL>
+ *  Demo Link: https://youtu.be/sO7OjLllrf0
  */ 
 #include <avr/io.h>
 #ifdef _SIMULATE_
@@ -15,52 +15,51 @@
 #endif
 #include "timer.h"
 
-enum LG_States { LG_SMStart, LG_State0, LG_State1, LG_State2, LG_Pause } LG_State;
+enum AS_States { AS_SMStart, AS_Init, AS_Wait, AS_Increment, AS_Decrement, AS_Reset } AS_State;
+unsigned char i = 0x00;
 
 void TickFct_Blink() {
-    switch(LG_State) {
-        case LG_SMStart:
-            LG_State = LG_State0;
+    switch(AS_State) {
+        case AS_SMStart:
+            AS_State = AS_Init;
             break;
-        case LG_State0:
-            PORTB = 0x01;
-            if((~PINA & 0x01) != 0) {
-                LG_State = LG_Pause;
+        case AS_Init:
+            PORTB = 0x07;
+            AS_State = AS_Wait;
+            break;
+        case AS_Wait:
+            if(((~PINA & 0x03) == 0x01) && (i % 10 == 0)) {
+                ++i;
+                AS_State = AS_Increment;
+            } else if(((~PINA & 0x03) == 0x02) && (i % 10 == 0)) {
+                ++i;
+                AS_State = AS_Decrement;
+            } else if((~PINA & 0x03) == 0x03) {
+                ++i;
+                AS_State = AS_Reset;
             } else {
-                LG_State = LG_State1;
+                i = 0;
+                AS_State = AS_Wait;
             }
             break;
-        case LG_State1:
-            PORTB = 0x02;
-            if((~PINA & 0x01) != 0) {
-                LG_State = LG_Pause;
-            } else {
-                LG_State = LG_State2;
+        case AS_Increment:
+            if(PINB < 9) {
+                PORTB = PINB + 1;
             }
+            AS_State = AS_Wait;
             break;
-        case LG_State2:
-            PORTB = 0x04;
-            if((~PINA & 0x01) != 0) {
-                LG_State = LG_Pause;
-            } else {
-                LG_State = LG_State0;
+        case AS_Decrement:
+            if(PINB > 0) {
+                PORTB = PINB - 1;
             }
+            AS_State = AS_Wait;
             break;
-        case LG_Pause:
-            if((~PINA & 0x01) != 0) {
-                if(PINB == 0x01) {
-                    LG_State = LG_State1;
-                } else if(PINB == 0x02) {
-                    LG_State = LG_State2;
-                } else if(PINB == 0x04) {
-                    LG_State = LG_State0;
-                }
-            } else {
-                LG_State = LG_Pause;
-            }
+        case AS_Reset:
+            PORTB = 0;
+            AS_State = AS_Wait;
             break;
         default:
-            LG_State = LG_SMStart;
+            AS_State = AS_SMStart;
             break;
     }
 }
@@ -69,9 +68,9 @@ int main(void) {
     /* Insert DDR and PORT initializations */
     DDRA = 0x00; PORTA = 0xFF;
     DDRB = 0xFF; PORTB = 0x00;
-    TimerSet(300);
+    TimerSet(1000);
     TimerOn();
-    LG_State = LG_SMStart;
+    AS_State = AS_SMStart;
     /* Insert your solution below */
     while (1) {
         TickFct_Blink();
